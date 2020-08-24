@@ -27,12 +27,75 @@
         path: /etc/apache2/ssl
         state: directory
 
-    # Create SSL Keys
-    - name: Create SSL keys
+    # Create key
+    - name: Create key
       become: yes
-      command: openssl req -batch -new -x509 -newkey rsa:2048 -nodes -sha256 \
-        -subj /CN=*.{{ vccw.hostname }}/O=oreore -days 3650 \
-        -keyout /etc/apache2/ssl/{{ vccw.hostname }}.key \
+      command: openssl genpkey \
+        -algorithm RSA \
+        -pkeyopt rsa_keygen_bits:2048 \
+        -pkeyopt rsa_keygen_pubexp:65537 \
+        -out /etc/apache2/ssl/{{ vccw.hostname }}.key
+
+    # Create Certificate Sign request
+    - name: Generate an OpenSSL Certificate Signing Request with Subject information
+      become: yes
+      shell: openssl req -new -key /etc/apache2/ssl/{{ vccw.hostname }}.key -out /etc/apache2/ssl/{{ vccw.hostname }}.csr -days 36500 -subj "/C=DE/ST=Berlin/L=Berlin/O=coderman/OU=IT/CN=vccw.test/emailAddress=admin@coderman.codes"
+
+    # Setup CA certificate
+    - name: Setup CA certificate
+      become: yes
+      template:
+        src: templates/cacert.pem
+        dest: /home/vagrant/cacert.pem
+        mode: 0775
+
+    # Setup CA key
+    - name: Setup CA key
+      become: yes
+      template:
+        src: templates/cakey.pem
+        dest: /home/vagrant/cakey.pem
+        mode: 0775
+
+    # Setup environment for CA
+    - name: Create config for CA
+      template:
+        src: templates/openssl.cnf
+        dest: /home/vagrant/openssl.cnf
+        mode: 0775
+    - name: Create CA folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: 0775
+      loop:
+        - /home/vagrant/certs
+        - /home/vagrant/crl
+        - /home/vagrant/newcerts
+        - /home/vagrant/private
+    - name: Create CA files
+      file:
+        path: /home/vagrant/index.txt
+        state: touch
+        mode: u=rw,g=r,o=r
+    - name: Write to serial file
+      become: yes
+      template:
+        src: templates/serial
+        dest: /home/vagrant/serial
+        mode: 0775
+
+    # Sign the certificates using the self CA
+    - name: Sign the server certificates
+      become: yes
+      command: openssl ca -batch -updatedb \
+        -days 36500 \
+        -config /home/vagrant/openssl.cnf \
+        -cert /home/vagrant/cacert.pem \
+        -keyfile /home/vagrant/cakey.pem \
+        -in /etc/apache2/ssl/{{ vccw.hostname }}.csr \
         -out /etc/apache2/ssl/{{ vccw.hostname }}.crt
 
     - name: "Replacing the Apache User"
