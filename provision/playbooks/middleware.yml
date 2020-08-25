@@ -98,6 +98,25 @@
         -in /etc/apache2/ssl/{{ vccw.hostname }}.csr \
         -out /etc/apache2/ssl/{{ vccw.hostname }}.crt
 
+    # Configure mutex for apache
+    - name: Create mutex config file (apache)
+      become: yes
+      template:
+        src: templates/mutex-file.conf
+        dest: /etc/apache2/conf-available/mutex-file.conf
+    - name: Enable mutex configuration
+      become: yes
+      shell: a2enconf mutex-file.conf
+    # Restart apache
+    - name: Reload apache settings
+      become: yes
+      shell: systemctl reload apache2
+
+    - name: Restart apache
+      become: yes
+      service: name=apache2 state=restarted
+
+
     - name: "Replacing the Apache User"
       become: yes
       replace:
@@ -152,7 +171,7 @@
     - name: Update php.ini
       become: yes
       lineinfile:
-        dest: /etc/php/7.0/apache2/conf.d/99-vccw.ini
+        dest: /etc/php/7.4/apache2/conf.d/99-vccw.ini
         create: yes
         line: "{{ item.key }} = {{ item.value }}"
       with_dict: "{{ vccw.php_ini }}"
@@ -162,7 +181,7 @@
     - name: Update php.ini for cli
       become: yes
       lineinfile:
-        dest: /etc/php/7.0/cli/conf.d/99-vccw.ini
+        dest: /etc/php/7.4/cli/conf.d/99-vccw.ini
         create: yes
         line: "{{ item.key }} = {{ item.value }}"
       with_dict: "{{ vccw.php_ini }}"
@@ -189,7 +208,7 @@
     - name: Update php.ini for mailcatcher
       become: yes
       lineinfile:
-        dest: /etc/php/7.0/apache2/conf.d/99-vccw.ini
+        dest: /etc/php/7.4/apache2/conf.d/99-vccw.ini
         create: yes
         line: "sendmail_path = /usr/bin/env catchmail"
       when: vccw.mailcatcher
@@ -198,7 +217,7 @@
     - name: Update php.ini for mailcatcher for cli
       become: yes
       lineinfile:
-        dest: /etc/php/7.0/cli/conf.d/99-vccw.ini
+        dest: /etc/php/7.4/cli/conf.d/99-vccw.ini
         create: yes
         line: "sendmail_path = /usr/bin/env catchmail"
       when: vccw.mailcatcher
