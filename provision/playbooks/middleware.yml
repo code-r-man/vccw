@@ -39,7 +39,11 @@
     # Create Certificate Sign request
     - name: Generate an OpenSSL Certificate Signing Request with Subject information
       become: yes
-      shell: openssl req -new -key /etc/apache2/ssl/{{ vccw.hostname }}.key -out /etc/apache2/ssl/{{ vccw.hostname }}.csr -days 36500 -subj "/C=DE/ST=Berlin/L=Berlin/O=coderman/OU=IT/CN=vccw.test/emailAddress=admin@coderman.codes"
+      shell: openssl req -new \
+        -key /etc/apache2/ssl/{{ vccw.hostname }}.key \
+        -out /etc/apache2/ssl/{{ vccw.hostname }}.csr \
+        -days 36500 \
+        -subj "/C=DE/ST=Berlin/L=Berlin/O=coderman/OU=IT/CN={{ vccw.hostname }}/emailAddress=admin@coderman.codes"
 
     # Setup CA certificate
     - name: Setup CA certificate
