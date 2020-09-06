@@ -28,6 +28,7 @@
         state: directory
 
     # Create key
+    # Creates a private key
     - name: Create key
       become: yes
       command: openssl genpkey \
