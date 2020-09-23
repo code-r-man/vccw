@@ -43,7 +43,7 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.box = ENV['wp_box'] || _conf['wp_box']
-  config.vm.box_version = "0.0.1"
+  # config.vm.box_version = "0.0.1"
   config.ssh.forward_agent = true
 
   config.vm.box_check_update = true
@@ -81,7 +81,7 @@ Vagrant.configure(2) do |config|
     vb.customize ['setextradata', :id, 'VBoxInternal/Devices/VMMDev/0/Config/GetHostTimeDisabled', 0]
   end
 
-  config.vm.provision "ansible_local" do |ansible|
+  config.vm.provision "ansible" do |ansible|
     ansible.compatibility_mode = "2.0"
     ansible.extra_vars = {
       vccw: _conf
@@ -104,7 +104,7 @@ Vagrant.configure(2) do |config|
   end
 
   if File.exists?(File.join(File.dirname(__FILE__), 'playbook-post.yml')) then
-    config.vm.provision "ansible_local" do |ansible|
+    config.vm.provision "ansible" do |ansible|
       ansible.compatibility_mode = "2.0"
       ansible.extra_vars = {
         vccw: _conf

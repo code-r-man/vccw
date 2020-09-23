@@ -6,6 +6,10 @@
 
   tasks:
 
+  # Requirement for 'Create Database (mysql_db)'
+  - name: Install PyMySQL
+    command: python3 -m pip install PyMySQL
+
   # Database Settings
   - name: Create Database
     mysql_db:
